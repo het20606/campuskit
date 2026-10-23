@@ -1,9 +1,11 @@
+
 pipeline {
-    agent any
+    agent {
+        label 'windows-campuskit'
+    }
 
     environment {
-        // Replace with your Docker Hub username and repository.
-        IMAGE_NAME = 'YOUR_DOCKERHUB_USERNAME/campuskit'
+        IMAGE_NAME = 'het20606/campuskit'
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
@@ -16,15 +18,15 @@ pipeline {
 
         stage('Build and Test') {
             steps {
-                sh 'python3 -m pip install -r requirements.txt'
-                sh 'python3 -m pytest -q'
+                bat 'python -m pip install -r requirements.txt'
+                bat 'python -m pytest -q'
             }
         }
 
         stage('Docker Build') {
             steps {
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
-                sh 'docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest'
+                bat 'docker build -t %IMAGE_NAME%:%IMAGE_TAG% .'
+                bat 'docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest'
             }
         }
 
@@ -35,35 +37,34 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
-                    sh 'docker push ${IMAGE_NAME}:${IMAGE_TAG}'
-                    sh 'docker push ${IMAGE_NAME}:latest'
-                    sh 'docker logout'
+                    bat 'powershell -NoProfile -Command "$env:DOCKER_PASS | docker login -u $env:DOCKER_USER --password-stdin"'
+                    bat 'docker push %IMAGE_NAME%:%IMAGE_TAG%'
+                    bat 'docker push %IMAGE_NAME%:latest'
                 }
             }
         }
 
         stage('Deploy to Minikube') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yaml'
-                sh 'kubectl apply -f k8s/service.yaml'
-                sh 'kubectl set image deployment/campuskit campuskit=${IMAGE_NAME}:${IMAGE_TAG}'
-                sh 'kubectl rollout status deployment/campuskit --timeout=120s'
+                bat 'kubectl apply -f k8s\\deployment.yaml'
+                bat 'kubectl apply -f k8s\\service.yaml'
+                bat 'kubectl set image deployment/campuskit campuskit=%IMAGE_NAME%:%IMAGE_TAG%'
+                bat 'kubectl rollout status deployment/campuskit --timeout=120s'
             }
         }
 
         stage('Verify') {
             steps {
-                sh 'kubectl get pods'
-                sh 'kubectl get deployment campuskit'
-                sh 'kubectl get service campuskit'
+                bat 'kubectl get pods'
+                bat 'kubectl get deployment campuskit'
+                bat 'kubectl get service campuskit'
             }
         }
     }
 
     post {
         always {
-            sh 'docker logout || true'
+            bat 'docker logout'
         }
     }
 }
