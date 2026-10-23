@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CampusKit | Study Shelf</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo"><span class="logo-icon">c.</span><span>campuskit</span></div>
+      <p class="side-label">YOUR SPACE</p>
+      <a class="nav active" href="/">▦ &nbsp; Study shelf</a>
+      <div class="side-tip">
+        <p class="side-label">A LITTLE REMINDER</p>
+        <p>Small bits of revision add up. You don't have to do it all at once.</p>
+      </div>
+      <div class="sidebar-foot">Made for getting things done.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topline">
+        <div><span class="crumb">My workspace /</span> Study shelf</div>
+        <span class="profile">H</span>
+      </header>
+
+      <section class="welcome">
+        <p class="eyebrow">YOUR SEMESTER, IN ONE PLACE</p>
+        <h1>Hey, welcome back.</h1>
+        <p class="lead">Keep your notes, practice work and revision list from getting scattered everywhere.</p>
+      </section>
+
+      <section class="stats">
+        <div class="stat-card"><span class="stat-label">ON YOUR SHELF</span><strong>{{ materials|length }}</strong><span class="stat-note">saved items</span></div>
+        <div class="stat-card"><span class="stat-label">DONE FOR NOW</span><strong>{{ materials|selectattr("status", "equalto", "Done")|list|length }}</strong><span class="stat-note">items reviewed</span></div>
+        <div class="stat-card"><span class="stat-label">STILL TO DO</span><strong>{{ materials|rejectattr("status", "equalto", "Done")|list|length }}</strong><span class="stat-note">pick one to start</span></div>
+      </section>
+
+      <section class="content-grid">
+        <div class="panel shelf-panel">
+          <div class="panel-head">
+            <div><h2>Study shelf</h2><p>Stuff you want to come back to.</p></div>
+            <span class="tiny-count">{{ materials|length }} items</span>
+          </div>
+          <div class="material-list">
+            {% for item in materials %}
+            <article class="material">
+              <div class="file-icon {% if item.kind == 'Practice' %}practice{% elif item.kind == 'Revision' %}revision{% endif %}">{% if item.kind == 'Practice' %}✎{% elif item.kind == 'Revision' %}↻{% else %}▤{% endif %}</div>
+              <div class="material-info">
+                <span class="subject">{{ item.subject }}</span>
+                <h3>{{ item.title }}</h3>
+                <span class="kind">{{ item.kind }}</span>
+              </div>
+              <form action="{{ url_for('update_status', item_id=item.id) }}" method="post">
+                <button class="state {{ item.status|lower|replace(' ', '-') }}" title="Click to move to the next status">{{ item.status }} ↗</button>
+              </form>
+            </article>
+            {% else %}
+            <p class="empty">Your shelf is empty. Add something you want to revise.</p>
+            {% endfor %}
+          </div>
+          <p class="hint">Tip: click a status to move it along — To review → In progress → Done.</p>
+        </div>
+
+        <aside class="panel add-panel">
+          <div class="panel-head"><div><h2>Add to shelf</h2><p>Save a topic for later.</p></div></div>
+          <form class="add-form" action="{{ url_for('add_material') }}" method="post">
+            <label for="subject">Subject</label>
+            <input id="subject" name="subject" placeholder="e.g. Cloud Computing" maxlength="60" required>
+            <label for="title">What is it?</label>
+            <input id="title" name="title" placeholder="e.g. Unit 3 quick notes" maxlength="100" required>
+            <label for="kind">Type</label>
+            <select id="kind" name="kind">
+              <option>Notes</option><option>Practice</option><option>Revision</option>
+            </select>
+            <button class="primary" type="submit">Add item <span>+</span></button>
+          </form>
+          <div class="aside-note"><span>✦</span><p><strong>Keep it manageable.</strong><br>One topic at a time is still progress.</p></div>
+        </aside>
+      </section>
+      <footer><span>CampusKit · a small student side project</span><span>Built with Flask</span></footer>
+    </main>
+  </div>
+</body>
+</html>

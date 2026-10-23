@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: campuskit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: campuskit
+  template:
+    metadata:
+      labels:
+        app: campuskit
+    spec:
+      containers:
+        - name: campuskit
+          image: YOUR_DOCKERHUB_USERNAME/campuskit:latest
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
